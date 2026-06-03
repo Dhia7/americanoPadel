@@ -1,0 +1,45 @@
+import { z } from "zod";
+
+export const createTournamentSchema = z
+  .object({
+    name: z.string().min(1).max(100),
+    totalRounds: z.coerce.number().int().min(1).max(20),
+    scoringMode: z.enum(["FIXED", "TIMED"]),
+    pointsPerMatch: z.coerce.number().int().min(1).max(50).optional(),
+    durationMinutes: z.coerce.number().int().min(1).max(60).optional(),
+    courtCount: z.coerce.number().int().min(1).max(4),
+    pin: z.string().regex(/^\d{4}$/).optional().or(z.literal("")),
+    autoAdvanceRounds: z.coerce.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.scoringMode === "FIXED" && !data.pointsPerMatch) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Points per match required for fixed scoring",
+        path: ["pointsPerMatch"],
+      });
+    }
+    if (data.scoringMode === "TIMED" && !data.durationMinutes) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Duration required for timed scoring",
+        path: ["durationMinutes"],
+      });
+    }
+  });
+
+export const playerNameSchema = z.string().min(1).max(50).trim();
+
+export const scoreSchema = z.object({
+  matchId: z.string(),
+  teamAPoints: z.coerce.number().int().min(0),
+  teamBPoints: z.coerce.number().int().min(0),
+  pin: z.string().optional(),
+});
+
+export function validatePlayerCount(count: number): string | null {
+  if (count < 4) return "Add at least 4 players";
+  if (count > 16) return "Maximum 16 players";
+  if (count % 4 !== 0) return "Player count must be a multiple of 4 (4, 8, 12, or 16)";
+  return null;
+}
