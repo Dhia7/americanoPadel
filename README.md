@@ -51,8 +51,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Push the repo to GitHub.
 2. Import the project in Vercel.
-3. Add `DATABASE_URL` in project environment variables.
-4. Deploy. Run `npx prisma db push` against production once (or use `prisma migrate deploy` if you use migrations).
+3. Create a PostgreSQL database (Neon or Vercel Postgres) and add `DATABASE_URL` in project environment variables (use the pooled connection string with `?sslmode=require` for Neon).
+4. Deploy. The build runs `prisma migrate deploy` automatically to create tables.
+
+If you already created tables with `prisma db push`, mark the initial migration as applied once:
+
+```bash
+npx prisma migrate resolve --applied 20250603000000_init
+```
 
 ## Organizer flow
 

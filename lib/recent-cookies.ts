@@ -23,6 +23,7 @@ export async function addRecentTournamentId(id: string): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
 }
 
@@ -34,5 +35,6 @@ export async function removeRecentTournamentId(id: string): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
 }

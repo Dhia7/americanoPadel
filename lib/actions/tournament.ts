@@ -9,11 +9,15 @@ import {
   getRecentTournamentIds,
   removeRecentTournamentId,
 } from "@/lib/recent-cookies";
+import { actionErrorMessage } from "@/lib/action-error";
 import { createTournamentSchema, playerNameSchema } from "@/lib/validations";
 
+export type CreateTournamentState = { error?: string } | null;
+
 export async function createTournament(
+  _prev: CreateTournamentState,
   formData: FormData
-): Promise<{ error?: string }> {
+): Promise<CreateTournamentState> {
   const raw = {
     name: formData.get("name"),
     totalRounds: formData.get("totalRounds"),
@@ -34,22 +38,32 @@ export async function createTournament(
   const pinHash =
     data.pin && data.pin.length === 4 ? await hashPin(data.pin) : null;
 
-  const tournament = await prisma.tournament.create({
-    data: {
-      name: data.name,
-      totalRounds: data.totalRounds,
-      scoringMode: data.scoringMode,
-      pointsPerMatch:
-        data.scoringMode === "FIXED" ? (data.pointsPerMatch ?? 24) : 24,
-      durationMinutes:
-        data.scoringMode === "TIMED" ? data.durationMinutes : null,
-      courtCount: data.courtCount,
-      pinHash,
-      autoAdvanceRounds: data.autoAdvanceRounds ?? true,
-    },
-  });
+  let tournament;
+  try {
+    tournament = await prisma.tournament.create({
+      data: {
+        name: data.name,
+        totalRounds: data.totalRounds,
+        scoringMode: data.scoringMode,
+        pointsPerMatch:
+          data.scoringMode === "FIXED" ? (data.pointsPerMatch ?? 24) : 24,
+        durationMinutes:
+          data.scoringMode === "TIMED" ? data.durationMinutes : null,
+        courtCount: data.courtCount,
+        pinHash,
+        autoAdvanceRounds: data.autoAdvanceRounds ?? true,
+      },
+    });
+  } catch (error) {
+    return { error: actionErrorMessage(error) };
+  }
 
-  await addRecentTournamentId(tournament.id);
+  try {
+    await addRecentTournamentId(tournament.id);
+  } catch (error) {
+    console.error("Failed to save recent tournament cookie:", error);
+  }
+
   redirect(`/t/${tournament.id}/manage`);
 }
 

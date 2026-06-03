@@ -1,23 +1,38 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { createTournament } from "@/lib/actions/tournament";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { useState } from "react";
+import {
+  createTournament,
+  type CreateTournamentState,
+} from "@/lib/actions/tournament";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+    >
+      {pending ? "Creating…" : "Create tournament"}
+    </button>
+  );
+}
 
 export function CreateTournamentForm() {
   const [mode, setMode] = useState<"FIXED" | "TIMED">("FIXED");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  function handleSubmit(formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      const result = await createTournament(formData);
-      if (result?.error) setError(result.error);
-    });
-  }
+  const [state, formAction] = useActionState<CreateTournamentState, FormData>(
+    createTournament,
+    null
+  );
 
   return (
-    <form action={handleSubmit} className="space-y-4 rounded-xl border border-zinc-200 p-6 dark:border-zinc-700">
+    <form
+      action={formAction}
+      className="space-y-4 rounded-xl border border-zinc-200 p-6 dark:border-zinc-700"
+    >
       <h2 className="text-lg font-semibold">New tournament</h2>
 
       <label className="block">
@@ -115,7 +130,9 @@ export function CreateTournamentForm() {
 
       <label className="flex items-center gap-2">
         <input type="checkbox" name="autoAdvanceRounds" defaultChecked />
-        <span className="text-sm">Auto-generate next round when all scores entered</span>
+        <span className="text-sm">
+          Auto-generate next round when all scores entered
+        </span>
       </label>
 
       <label className="block">
@@ -131,17 +148,11 @@ export function CreateTournamentForm() {
         />
       </label>
 
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
+      {state?.error && (
+        <p className="text-sm text-red-600">{state.error}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-      >
-        {pending ? "Creating…" : "Create tournament"}
-      </button>
+      <SubmitButton />
     </form>
   );
 }
