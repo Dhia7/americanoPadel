@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { hashPin } from "@/lib/pin";
 import {
   addRecentTournamentId,
+  getRecentTournamentIds,
   removeRecentTournamentId,
 } from "@/lib/recent-cookies";
 import { createTournamentSchema, playerNameSchema } from "@/lib/validations";
