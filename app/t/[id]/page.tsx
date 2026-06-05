@@ -24,8 +24,7 @@ export default async function PublicTournamentPage({
     redirect(`/t/${id}/final`);
   }
 
-  const allMatches = tournament.rounds.flatMap((r) => r.matches);
-  const standings = computeStandings(tournament.players, allMatches);
+  const standings = computeStandings(tournament.players, tournament.rounds);
   const currentRound = getCurrentRound(tournament);
 
   return (
@@ -45,7 +44,7 @@ export default async function PublicTournamentPage({
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Standings</h2>
-        <Leaderboard rows={standings} />
+        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
       </section>
 
       {currentRound && (

@@ -1,4 +1,8 @@
-import type { StandingRow } from "@/lib/standings";
+import type { RoundRecord, StandingRow } from "@/lib/standings";
+
+function formatRecord({ wins, losses, ties }: Pick<RoundRecord, "wins" | "losses" | "ties">) {
+  return `${wins}-${losses}-${ties}`;
+}
 
 function StarIcon() {
   return (
@@ -41,7 +45,13 @@ function getRankStyles(rank: number, showMedals: boolean) {
   }
 }
 
-export function Leaderboard({ rows }: { rows: StandingRow[] }) {
+export function Leaderboard({
+  rows,
+  totalRounds = 0,
+}: {
+  rows: StandingRow[];
+  totalRounds?: number;
+}) {
   if (rows.length === 0) {
     return (
       <p className="text-sm text-zinc-500">No scores yet. Standings appear after matches are played.</p>
@@ -49,15 +59,29 @@ export function Leaderboard({ rows }: { rows: StandingRow[] }) {
   }
 
   const showMedals = rows.some((row) => row.points > 0);
+  const roundNumbers = Array.from(
+    { length: totalRounds },
+    (_, index) => index + 1
+  );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-      <table className="w-full text-left text-sm">
+    <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
+      <table className="w-full min-w-max text-left text-sm">
         <thead className="bg-zinc-100 dark:bg-zinc-900">
           <tr>
             <th className="px-4 py-3 font-semibold">#</th>
             <th className="px-4 py-3 font-semibold">Player</th>
             <th className="px-4 py-3 font-semibold text-right">Pts</th>
+            <th className="px-4 py-3 font-semibold text-right">W-L-T</th>
+            {roundNumbers.map((roundNumber) => (
+              <th
+                key={roundNumber}
+                className="px-3 py-3 text-center font-semibold"
+                title="Points · Win-Loss-Tie"
+              >
+                R{roundNumber}
+              </th>
+            ))}
             <th className="px-4 py-3 font-semibold text-right">Played</th>
           </tr>
         </thead>
@@ -79,6 +103,29 @@ export function Leaderboard({ rows }: { rows: StandingRow[] }) {
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">
                   {row.points}
                 </td>
+                <td className={`px-4 py-3 text-right tabular-nums ${styles.muted}`}>
+                  {formatRecord(row)}
+                </td>
+                {roundNumbers.map((roundNumber) => {
+                  const round = row.rounds[roundNumber];
+                  return (
+                    <td
+                      key={roundNumber}
+                      className={`px-3 py-3 text-center tabular-nums ${styles.muted}`}
+                    >
+                      {round ? (
+                        <span className="inline-flex flex-col leading-tight">
+                          <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                            {round.points}
+                          </span>
+                          <span className="text-xs">{formatRecord(round)}</span>
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  );
+                })}
                 <td className={`px-4 py-3 text-right tabular-nums ${styles.muted}`}>
                   {row.played}
                 </td>

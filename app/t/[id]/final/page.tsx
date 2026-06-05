@@ -14,8 +14,7 @@ export default async function FinalPage({
   const tournament = await getTournamentFull(id);
   if (!tournament) notFound();
 
-  const allMatches = tournament.rounds.flatMap((r) => r.matches);
-  const standings = computeStandings(tournament.players, allMatches);
+  const standings = computeStandings(tournament.players, tournament.rounds);
   const top3 = standings.filter((r) => r.rank <= 3);
 
   return (
@@ -54,7 +53,7 @@ export default async function FinalPage({
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Final standings</h2>
-        <Leaderboard rows={standings} />
+        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
       </section>
 
       <Link href="/" className="text-center text-sm text-zinc-500 hover:underline">

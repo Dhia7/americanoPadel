@@ -51,7 +51,7 @@ export default async function ManagePage({
   }
 
   const allMatches = tournament.rounds.flatMap((r) => r.matches);
-  const standings = computeStandings(tournament.players, allMatches);
+  const standings = computeStandings(tournament.players, tournament.rounds);
   const currentRound = getCurrentRound(tournament);
   const pinVerified = await isPinVerified(id);
   const needsPin = !!tournament.pinHash && !pinVerified;
@@ -183,7 +183,7 @@ export default async function ManagePage({
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Live standings</h2>
-        <Leaderboard rows={standings} />
+        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
       </section>
     </div>
   );
