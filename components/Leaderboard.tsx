@@ -12,7 +12,14 @@ function StarIcon() {
   );
 }
 
-function getRankStyles(rank: number) {
+const defaultRankStyles = {
+  row: "border-zinc-200 dark:border-zinc-800",
+  muted: "text-zinc-500",
+};
+
+function getRankStyles(rank: number, showMedals: boolean) {
+  if (!showMedals) return defaultRankStyles;
+
   switch (rank) {
     case 1:
       return {
@@ -30,10 +37,7 @@ function getRankStyles(rank: number) {
         muted: "text-orange-900/70 dark:text-orange-200/80",
       };
     default:
-      return {
-        row: "border-zinc-200 dark:border-zinc-800",
-        muted: "text-zinc-500",
-      };
+      return defaultRankStyles;
   }
 }
 
@@ -43,6 +47,8 @@ export function Leaderboard({ rows }: { rows: StandingRow[] }) {
       <p className="text-sm text-zinc-500">No scores yet. Standings appear after matches are played.</p>
     );
   }
+
+  const showMedals = rows.some((row) => row.points > 0);
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
@@ -57,7 +63,7 @@ export function Leaderboard({ rows }: { rows: StandingRow[] }) {
         </thead>
         <tbody>
           {rows.map((row) => {
-            const styles = getRankStyles(row.rank);
+            const styles = getRankStyles(row.rank, showMedals);
             return (
               <tr
                 key={row.playerId}
@@ -66,7 +72,7 @@ export function Leaderboard({ rows }: { rows: StandingRow[] }) {
                 <td className="px-4 py-3 font-medium">{row.rank}</td>
                 <td className="px-4 py-3">
                   <span className="inline-flex items-center gap-1.5">
-                    {row.rank === 1 && <StarIcon />}
+                    {showMedals && row.rank === 1 && <StarIcon />}
                     {row.name}
                   </span>
                 </td>
