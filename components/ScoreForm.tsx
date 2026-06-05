@@ -12,6 +12,8 @@ export function ScoreForm({
   teamALabel,
   teamBLabel,
   needsPin,
+  defaultTeamAPoints,
+  defaultTeamBPoints,
 }: {
   matchId: string;
   scoringMode: "FIXED" | "TIMED";
@@ -20,6 +22,8 @@ export function ScoreForm({
   teamALabel: string;
   teamBLabel: string;
   needsPin: boolean;
+  defaultTeamAPoints?: number;
+  defaultTeamBPoints?: number;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -50,6 +54,13 @@ export function ScoreForm({
         </p>
       )}
 
+      {scoringMode === "TIMED" && (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Enter the points scored when time ran out. Each court and round can
+          have different scores.
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="text-sm font-medium">{teamALabel}</span>
@@ -59,6 +70,7 @@ export function ScoreForm({
             min={0}
             max={scoringMode === "FIXED" ? pointsPerMatch : 999}
             required
+            defaultValue={defaultTeamAPoints}
             className="mt-1 w-full rounded-lg border border-zinc-300 px-4 py-3 text-2xl font-semibold tabular-nums dark:border-zinc-600 dark:bg-zinc-900"
             inputMode="numeric"
           />
@@ -71,6 +83,7 @@ export function ScoreForm({
             min={0}
             max={scoringMode === "FIXED" ? pointsPerMatch : 999}
             required
+            defaultValue={defaultTeamBPoints}
             className="mt-1 w-full rounded-lg border border-zinc-300 px-4 py-3 text-2xl font-semibold tabular-nums dark:border-zinc-600 dark:bg-zinc-900"
             inputMode="numeric"
           />
@@ -103,7 +116,11 @@ export function ScoreForm({
         disabled={pending}
         className="w-full rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
       >
-        {pending ? "Saving…" : "Save score"}
+        {pending
+          ? "Saving…"
+          : defaultTeamAPoints != null
+            ? "Update score"
+            : "Save score"}
       </button>
     </form>
   );

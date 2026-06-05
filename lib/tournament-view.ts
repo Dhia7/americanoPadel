@@ -27,6 +27,16 @@ export function canRegenerateRound(tournament: TournamentFull) {
   return round.matches.every((m) => !m.completedAt);
 }
 
+export function canGoBackToPreviousRound(tournament: TournamentFull) {
+  return tournament.status === "ACTIVE" && tournament.currentRound > 1;
+}
+
+export function canClearCurrentRoundScores(tournament: TournamentFull) {
+  const round = getCurrentRound(tournament);
+  if (!round) return false;
+  return round.matches.some((m) => m.completedAt != null);
+}
+
 export function allRoundsComplete(tournament: TournamentFull) {
   return (
     tournament.currentRound === tournament.totalRounds &&

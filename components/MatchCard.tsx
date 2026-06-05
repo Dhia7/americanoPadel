@@ -12,12 +12,14 @@ export function MatchCard({
   match,
   tournamentId,
   manage = false,
+  editable = false,
   scoringMode,
   durationMinutes,
 }: {
   match: MatchWithPlayers;
   tournamentId: string;
   manage?: boolean;
+  editable?: boolean;
   scoringMode?: "FIXED" | "TIMED";
   durationMinutes?: number | null;
 }) {
@@ -35,11 +37,11 @@ export function MatchCard({
         done
           ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/30"
           : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
-      } ${manage && !done ? "cursor-pointer" : ""}`}
+      } ${manage && (editable || !done) ? "cursor-pointer" : ""}`}
     >
       <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-zinc-500">
         <span>Court {match.court}</span>
-        <span>{done ? "Done" : "Pending"}</span>
+        <span>{done ? (editable ? "Edit score" : "Done") : "Pending"}</span>
       </div>
       <p className="font-medium">{teamA}</p>
       <p className="my-1 text-center text-xs text-zinc-400">vs</p>
@@ -51,7 +53,7 @@ export function MatchCard({
     </div>
   );
 
-  if (manage && !done) {
+  if (manage && (editable || !done)) {
     return (
       <Link href={`/t/${tournamentId}/match/${match.id}`}>{content}</Link>
     );

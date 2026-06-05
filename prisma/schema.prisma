@@ -29,8 +29,9 @@ model Tournament {
   courtCount        Int              @default(1)
   pinHash           String?
   autoAdvanceRounds Boolean          @default(true)
-  currentRound      Int              @default(0)
-  createdAt         DateTime         @default(now())
+  currentRound           Int              @default(0)
+  round1PairingSnapshot  Json?
+  createdAt              DateTime         @default(now())
   players           Player[]
   rounds            Round[]
 }

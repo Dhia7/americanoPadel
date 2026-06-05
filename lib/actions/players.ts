@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePinAccess, verifyPin, setPinVerified } from "@/lib/pin";
 import { playerNameSchema, validatePlayerCount } from "@/lib/validations";
+import {
+  validateManualMatches,
+  type ManualMatchInput,
+} from "@/lib/pairing/validateManual";
+import { persistRoundMatches } from "@/lib/actions/rounds";
 
 async function ensureDraftManage(
   tournamentId: string,
@@ -104,6 +109,48 @@ export async function startTournament(
   });
 
   const roundResult = await generateNextRoundInternal(tournamentId);
+  if (roundResult.error) return roundResult;
+
+  revalidatePath(`/t/${tournamentId}`);
+  revalidatePath(`/t/${tournamentId}/manage`);
+  return {};
+}
+
+export async function startTournamentManual(
+  tournamentId: string,
+  matches: ManualMatchInput[],
+  pin?: string
+): Promise<{ error?: string }> {
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    include: { players: true },
+  });
+  if (!tournament) return { error: "Tournament not found" };
+  if (tournament.status !== "DRAFT") return { error: "Already started" };
+
+  const access = await requirePinAccess(tournamentId, tournament.pinHash);
+  if (!access.ok) {
+    if (!pin) return { error: "PIN required" };
+    const valid = await verifyPin(pin, tournament.pinHash);
+    if (!valid) return { error: "Invalid PIN" };
+    await setPinVerified(tournamentId);
+  }
+
+  const countError = validatePlayerCount(tournament.players.length);
+  if (countError) return { error: countError };
+
+  const validationError = validateManualMatches(
+    tournament.players.map((p) => p.id),
+    matches
+  );
+  if (validationError) return { error: validationError };
+
+  await prisma.tournament.update({
+    where: { id: tournamentId },
+    data: { status: "ACTIVE" },
+  });
+
+  const roundResult = await persistRoundMatches(tournamentId, 1, matches);
   if (roundResult.error) return roundResult;
 
   revalidatePath(`/t/${tournamentId}`);

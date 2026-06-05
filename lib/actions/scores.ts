@@ -49,6 +49,8 @@ export async function saveScore(
     }
   }
 
+  const wasComplete = match.completedAt != null;
+
   await prisma.match.update({
     where: { id: match.id },
     data: {
@@ -58,7 +60,9 @@ export async function saveScore(
     },
   });
 
-  await tryAutoAdvanceRound(tournament.id);
+  if (!wasComplete) {
+    await tryAutoAdvanceRound(tournament.id);
+  }
 
   revalidatePath(`/t/${tournament.id}`);
   revalidatePath(`/t/${tournament.id}/manage`);

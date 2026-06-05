@@ -5,7 +5,12 @@ import { MatchCard } from "@/components/MatchCard";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { PinGate } from "@/components/PinGate";
 import { PlayerManager } from "@/components/PlayerManager";
-import { ManageActions } from "@/components/ManageActions";
+import { RoundPairingControls } from "@/components/RoundPairingControls";
+import { buildHistoryFromMatches } from "@/lib/pairing/history";
+import {
+  buildPlayerPairingSummary,
+  serializePairingHistory,
+} from "@/lib/pairing/display-history";
 import { PollRefresh } from "@/components/PollRefresh";
 import { getTournamentFull } from "@/lib/tournament-data";
 import { computeStandings } from "@/lib/standings";
@@ -14,8 +19,14 @@ import {
   getCurrentRound,
   canGenerateNextRound,
   canRegenerateRound,
+  canGoBackToPreviousRound,
+  canClearCurrentRoundScores,
   allRoundsComplete,
 } from "@/lib/tournament-view";
+import {
+  parseRound1Snapshot,
+  snapshotToSlots,
+} from "@/lib/pairing/snapshot";
 
 export default async function ManagePage({
   params,
@@ -44,6 +55,18 @@ export default async function ManagePage({
   const currentRound = getCurrentRound(tournament);
   const pinVerified = await isPinVerified(id);
   const needsPin = !!tournament.pinHash && !pinVerified;
+
+  const completedMatches = allMatches.filter((m) => m.completedAt);
+  const pairingHistory = buildHistoryFromMatches(completedMatches);
+  const pairingSummary = buildPlayerPairingSummary(
+    tournament.players,
+    pairingHistory
+  );
+  const serializedHistory = serializePairingHistory(pairingHistory);
+  const round1Snapshot = parseRound1Snapshot(tournament.round1PairingSnapshot);
+  const originalRound1Slots = round1Snapshot
+    ? snapshotToSlots(round1Snapshot)
+    : undefined;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
@@ -78,26 +101,62 @@ export default async function ManagePage({
             tournamentId={id}
             players={tournament.players}
             needsPin={needsPin}
+            totalRounds={tournament.totalRounds}
+            courtCount={tournament.courtCount}
+            scoringMode={tournament.scoringMode}
+            pointsPerMatch={tournament.pointsPerMatch}
+            durationMinutes={tournament.durationMinutes}
           />
         </section>
       )}
 
       {tournament.status === "ACTIVE" && (
         <>
-          <ManageActions
+          <RoundPairingControls
             tournamentId={id}
+            players={tournament.players}
+            pairingSummary={pairingSummary}
+            pairingHistory={serializedHistory}
+            courtCount={tournament.courtCount}
+            roundNumber={tournament.currentRound}
+            totalRounds={tournament.totalRounds}
+            scoringMode={tournament.scoringMode}
+            pointsPerMatch={tournament.pointsPerMatch}
+            durationMinutes={tournament.durationMinutes}
+            needsPin={needsPin}
             canGenerateNext={canGenerateNextRound(tournament)}
             canRegenerate={canRegenerateRound(tournament)}
+            canGoBack={canGoBackToPreviousRound(tournament)}
+            canClearScores={canClearCurrentRoundScores(tournament)}
             canEnd={true}
-            needsPin={needsPin}
             nextRoundLabel={`Generate round ${tournament.currentRound + 1}`}
+            currentRoundMatches={currentRound?.matches ?? []}
+            originalRound1Slots={originalRound1Slots}
           />
 
           {currentRound && (
             <section>
               <h2 className="mb-3 text-lg font-semibold">
-                Round {currentRound.number} — enter scores
+                Round {currentRound.number} —{" "}
+                {currentRound.matches.every((m) => m.completedAt)
+                  ? "edit scores"
+                  : "enter scores"}
               </h2>
+              {canRegenerateRound(tournament) &&
+                tournament.currentRound === 1 && (
+                  <p className="mb-3 text-sm text-zinc-500">
+                    Wrong round 1 pairings? Use <strong>Edit round 1 pairings</strong>{" "}
+                    above, or <strong>Clear round 1 scores</strong> first if scores
+                    are already entered.
+                  </p>
+                )}
+              {canGoBackToPreviousRound(tournament) && (
+                <p className="mb-3 text-sm text-zinc-500">
+                  Need to fix an earlier round? Use <strong>Back to round{" "}
+                  {tournament.currentRound - 1}</strong> above — the current round
+                  will be removed.
+                </p>
+              )}
               <div className="grid gap-3">
                 {currentRound.matches.map((m) => (
                   <MatchCard
@@ -105,6 +164,7 @@ export default async function ManagePage({
                     match={m}
                     tournamentId={id}
                     manage
+                    editable
                     scoringMode={tournament.scoringMode}
                     durationMinutes={tournament.durationMinutes}
                   />

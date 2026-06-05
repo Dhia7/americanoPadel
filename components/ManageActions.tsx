@@ -68,7 +68,7 @@ export function ManageActions({
           }
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-600"
         >
-          Regenerate round
+          Auto-pair again
         </button>
       )}
       {canEnd && (

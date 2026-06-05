@@ -17,7 +17,8 @@ export default async function MatchScorePage({
   const tournament = match.round.tournament;
   if (tournament.status === "ENDED") redirect(`/t/${id}/final`);
   if (tournament.status !== "ACTIVE") redirect(`/t/${id}/manage`);
-  if (match.completedAt) redirect(`/t/${id}/manage`);
+  const isCurrentRound = match.round.number === tournament.currentRound;
+  if (match.completedAt && !isCurrentRound) redirect(`/t/${id}/manage`);
 
   const pinAccess = await requirePinAccess(id, tournament.pinHash);
   const pinVerified = await isPinVerified(id);
@@ -44,7 +45,9 @@ export default async function MatchScorePage({
         <p className="text-xs font-medium uppercase text-zinc-500">
           Round {match.round.number} · Court {match.court}
         </p>
-        <h1 className="mt-1 text-xl font-bold">Enter score</h1>
+        <h1 className="mt-1 text-xl font-bold">
+          {match.completedAt ? "Edit score" : "Enter score"}
+        </h1>
       </header>
       <ScoreForm
         matchId={match.id}
@@ -54,6 +57,8 @@ export default async function MatchScorePage({
         teamALabel={teamALabel}
         teamBLabel={teamBLabel}
         needsPin={!!tournament.pinHash && !pinVerified}
+        defaultTeamAPoints={match.teamAPoints ?? undefined}
+        defaultTeamBPoints={match.teamBPoints ?? undefined}
       />
     </div>
   );
