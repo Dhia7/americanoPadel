@@ -1,7 +1,54 @@
 import type { RoundRecord, StandingRow } from "@/lib/standings";
 
-function formatRecord({ wins, losses, ties }: Pick<RoundRecord, "wins" | "losses" | "ties">) {
-  return `${wins}-${losses}-${ties}`;
+const recordColors = {
+  win: "text-emerald-600 dark:text-emerald-400",
+  loss: "text-rose-600 dark:text-rose-400",
+  tie: "text-amber-600 dark:text-amber-400",
+  sep: "text-zinc-400 dark:text-zinc-500",
+};
+
+function ColoredRecord({
+  wins,
+  losses,
+  ties,
+  size = "sm",
+}: Pick<RoundRecord, "wins" | "losses" | "ties"> & { size?: "sm" | "xs" }) {
+  const textSize = size === "xs" ? "text-xs" : "text-sm";
+
+  return (
+    <span className={`inline-flex items-center tabular-nums font-medium ${textSize}`}>
+      <span className={recordColors.win}>{wins}</span>
+      <span className={recordColors.sep}>-</span>
+      <span className={recordColors.loss}>{losses}</span>
+      <span className={recordColors.sep}>-</span>
+      <span className={recordColors.tie}>{ties}</span>
+    </span>
+  );
+}
+
+function RoundOutcome({ wins, losses, ties }: Pick<RoundRecord, "wins" | "losses" | "ties">) {
+  if (wins === 1) {
+    return <span className={`text-xs font-semibold ${recordColors.win}`}>W</span>;
+  }
+  if (losses === 1) {
+    return <span className={`text-xs font-semibold ${recordColors.loss}`}>L</span>;
+  }
+  if (ties === 1) {
+    return <span className={`text-xs font-semibold ${recordColors.tie}`}>T</span>;
+  }
+  return <ColoredRecord wins={wins} losses={losses} ties={ties} size="xs" />;
+}
+
+function RecordHeader() {
+  return (
+    <span className="inline-flex items-center font-semibold">
+      <span className={recordColors.win}>W</span>
+      <span className={recordColors.sep}>-</span>
+      <span className={recordColors.loss}>L</span>
+      <span className={recordColors.sep}>-</span>
+      <span className={recordColors.tie}>T</span>
+    </span>
+  );
 }
 
 function StarIcon() {
@@ -72,7 +119,9 @@ export function Leaderboard({
             <th className="px-4 py-3 font-semibold">#</th>
             <th className="px-4 py-3 font-semibold">Player</th>
             <th className="px-4 py-3 font-semibold text-right">Pts</th>
-            <th className="px-4 py-3 font-semibold text-right">W-L-T</th>
+            <th className="px-4 py-3 text-right">
+              <RecordHeader />
+            </th>
             {roundNumbers.map((roundNumber) => (
               <th
                 key={roundNumber}
@@ -103,8 +152,8 @@ export function Leaderboard({
                 <td className="px-4 py-3 text-right font-semibold tabular-nums">
                   {row.points}
                 </td>
-                <td className={`px-4 py-3 text-right tabular-nums ${styles.muted}`}>
-                  {formatRecord(row)}
+                <td className="px-4 py-3 text-right">
+                  <ColoredRecord wins={row.wins} losses={row.losses} ties={row.ties} />
                 </td>
                 {roundNumbers.map((roundNumber) => {
                   const round = row.rounds[roundNumber];
@@ -118,7 +167,11 @@ export function Leaderboard({
                           <span className="font-medium text-zinc-800 dark:text-zinc-200">
                             {round.points}
                           </span>
-                          <span className="text-xs">{formatRecord(round)}</span>
+                          <RoundOutcome
+                            wins={round.wins}
+                            losses={round.losses}
+                            ties={round.ties}
+                          />
                         </span>
                       ) : (
                         "—"
