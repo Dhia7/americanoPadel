@@ -4,6 +4,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { MatchCard } from "@/components/MatchCard";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { PinGate } from "@/components/PinGate";
+import { EditTournamentSettings } from "@/components/EditTournamentSettings";
 import { PlayerManager } from "@/components/PlayerManager";
 import { RoundPairingControls } from "@/components/RoundPairingControls";
 import { buildHistoryFromMatches } from "@/lib/pairing/history";
@@ -23,6 +24,7 @@ import {
   canRegenerateRound,
   canGoBackToPreviousRound,
   canClearCurrentRoundScores,
+  canEditTournamentSettings,
   allRoundsComplete,
   formatRoundProgress,
   getRoundCountForDisplay,
@@ -107,6 +109,24 @@ export default async function ManagePage({
           </Link>
         </div>
       </header>
+
+      {canEditTournamentSettings(tournament) && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold">Tournament settings</h2>
+          <EditTournamentSettings
+            tournamentId={id}
+            needsPin={needsPin}
+            name={tournament.name}
+            totalRounds={tournament.totalRounds}
+            unlimitedRounds={tournament.unlimitedRounds}
+            courtCount={tournament.courtCount}
+            scoringMode={tournament.scoringMode}
+            pointsPerMatch={tournament.pointsPerMatch}
+            durationMinutes={tournament.durationMinutes}
+            autoAdvanceRounds={tournament.autoAdvanceRounds}
+          />
+        </section>
+      )}
 
       {tournament.status === "DRAFT" && (
         <section>

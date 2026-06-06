@@ -57,6 +57,14 @@ export function canRegenerateRound(tournament: TournamentFull) {
   return round.matches.every((m) => !m.completedAt);
 }
 
+export function canEditTournamentSettings(tournament: TournamentFull) {
+  if (tournament.status === "DRAFT") return true;
+  if (tournament.status !== "ACTIVE" || tournament.currentRound !== 1) {
+    return false;
+  }
+  return canRegenerateRound(tournament);
+}
+
 export function canGoBackToPreviousRound(tournament: TournamentFull) {
   return tournament.status === "ACTIVE" && tournament.currentRound > 1;
 }
