@@ -8,9 +8,11 @@ import {
   type PlayerPairingSummary,
   type SerializablePairingHistory,
 } from "@/lib/pairing/display-history";
+import { generateRoundMatches } from "@/lib/pairing/generateRound";
 import {
   emptyMatchSlots,
   manualMatchesFromSlots,
+  slotsFromMatches,
   validateManualMatches,
   type MatchSlot,
 } from "@/lib/pairing/validateManual";
@@ -84,6 +86,7 @@ export function ManualPairingPanel({
   courtCount,
   roundNumber,
   totalRounds,
+  unlimitedRounds = false,
   scoringMode,
   pointsPerMatch,
   durationMinutes,
@@ -100,6 +103,7 @@ export function ManualPairingPanel({
   courtCount: number;
   roundNumber: number;
   totalRounds: number;
+  unlimitedRounds?: boolean;
   scoringMode: "FIXED" | "TIMED";
   pointsPerMatch: number;
   durationMinutes: number | null;
@@ -158,6 +162,17 @@ export function ManualPairingPanel({
   function resetToOriginal() {
     if (!originalSlots) return;
     setSlots(originalSlots);
+    setError(null);
+  }
+
+  function suggestPairings() {
+    const playerIds = players.map((p) => p.id);
+    const history = {
+      partners: new Set(pairingHistory.partners),
+      opponents: new Set(pairingHistory.opponents),
+    };
+    const matches = generateRoundMatches(playerIds, history, courtCount);
+    setSlots(slotsFromMatches(matches));
     setError(null);
   }
 
@@ -229,7 +244,9 @@ export function ManualPairingPanel({
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {isEditing
               ? "Change any player or team, then save. You can clear a match, swap teams, or reset all."
-              : "Choose who plays together in round 1. All later rounds will be paired automatically."}
+              : mode === "next"
+                ? `Choose who plays with whom in round ${roundNumber}. Past partner and opponent history is shown below.`
+                : "Choose who plays together in round 1. Later rounds can be paired automatically or chosen manually."}
           </p>
         </div>
         {onCancel && (
@@ -245,6 +262,7 @@ export function ManualPairingPanel({
 
       <RoundConditions
         totalRounds={totalRounds}
+        unlimitedRounds={unlimitedRounds}
         courtCount={courtCount}
         scoringMode={scoringMode}
         pointsPerMatch={pointsPerMatch}
@@ -292,6 +310,15 @@ export function ManualPairingPanel({
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {(mode === "next" || mode === "start") && (
+          <button
+            type="button"
+            onClick={suggestPairings}
+            className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
+          >
+            Suggest pairings
+          </button>
+        )}
         {originalSlots && (
           <button
             type="button"

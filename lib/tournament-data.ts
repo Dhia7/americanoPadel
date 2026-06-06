@@ -10,12 +10,6 @@ export async function getTournamentFull(id: string) {
         include: {
           matches: {
             orderBy: [{ court: "asc" }, { id: "asc" }],
-            include: {
-              player1: true,
-              player2: true,
-              player3: true,
-              player4: true,
-            },
           },
         },
       },

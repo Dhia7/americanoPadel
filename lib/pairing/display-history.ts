@@ -80,5 +80,17 @@ export function repeatPartnerWarning(
   if (history.partners.has(pairKey(teamB[0], teamB[1]))) {
     warnings.push("Team B played together before");
   }
+  let opponentRepeat = false;
+  outer: for (const a of teamA) {
+    for (const b of teamB) {
+      if (history.opponents.has(pairKey(a, b))) {
+        opponentRepeat = true;
+        break outer;
+      }
+    }
+  }
+  if (opponentRepeat) {
+    warnings.push("These teams faced each other before");
+  }
   return warnings.length ? warnings.join(" · ") : null;
 }

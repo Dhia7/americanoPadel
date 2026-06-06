@@ -5,7 +5,7 @@ import {
   generateNextRound,
   regenerateCurrentRound,
 } from "@/lib/actions/rounds";
-import { endTournament } from "@/lib/actions/tournament";
+import { EndTournamentButton } from "@/components/EndTournamentButton";
 
 export function ManageActions({
   tournamentId,
@@ -66,33 +66,13 @@ export function ManageActions({
           onClick={() =>
             run(() => regenerateCurrentRound(tournamentId, getPin()))
           }
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium dark:border-zinc-600"
+          className="rounded-lg border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
         >
-          Auto-pair again
+          Re-generate round (auto)
         </button>
       )}
       {canEnd && (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            if (
-              !confirm(
-                "End this tournament? Scores and rounds will be frozen."
-              )
-            ) {
-              return;
-            }
-            const pin = getPin();
-            startTransition(async () => {
-              const result = await endTournament(tournamentId, pin);
-              if (result?.error) setError(result.error);
-            });
-          }}
-          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 dark:border-red-800 dark:text-red-400"
-        >
-          End tournament
-        </button>
+        <EndTournamentButton tournamentId={tournamentId} needsPin={needsPin} />
       )}
       {error && <p className="w-full text-sm text-red-600">{error}</p>}
     </div>

@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
 const RETRY_ATTEMPTS = 4;
-const RETRY_DELAY_MS = 2500;
+const RETRY_BASE_DELAY_MS = 400;
 
 function isTransientDbError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -35,7 +35,7 @@ function createPrismaClient() {
             if (!isTransientDbError(error) || attempt === RETRY_ATTEMPTS) {
               throw error;
             }
-            await sleep(RETRY_DELAY_MS * attempt);
+            await sleep(RETRY_BASE_DELAY_MS * attempt);
           }
         }
         throw lastError;

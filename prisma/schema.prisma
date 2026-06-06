@@ -26,6 +26,7 @@ model Tournament {
   pointsPerMatch    Int              @default(24)
   durationMinutes   Int?
   totalRounds       Int
+  unlimitedRounds   Boolean          @default(false)
   courtCount        Int              @default(1)
   pinHash           String?
   autoAdvanceRounds Boolean          @default(true)

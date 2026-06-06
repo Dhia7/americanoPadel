@@ -3,7 +3,8 @@ import { z } from "zod";
 export const createTournamentSchema = z
   .object({
     name: z.string().min(1).max(100),
-    totalRounds: z.coerce.number().int().min(1).max(20),
+    totalRounds: z.coerce.number().int().min(1).max(20).optional(),
+    unlimitedRounds: z.coerce.boolean().optional(),
     scoringMode: z.enum(["FIXED", "TIMED"]),
     pointsPerMatch: z.coerce.number().int().min(1).max(50).optional(),
     durationMinutes: z.coerce.number().int().min(1).max(60).optional(),
@@ -12,6 +13,13 @@ export const createTournamentSchema = z
     autoAdvanceRounds: z.coerce.boolean().optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.unlimitedRounds && !data.totalRounds) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Number of rounds required",
+        path: ["totalRounds"],
+      });
+    }
     if (data.scoringMode === "FIXED" && !data.pointsPerMatch) {
       ctx.addIssue({
         code: "custom",

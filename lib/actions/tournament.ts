@@ -18,9 +18,13 @@ export async function createTournament(
   _prev: CreateTournamentState,
   formData: FormData
 ): Promise<CreateTournamentState> {
+  const unlimitedRounds = formData.get("unlimitedRounds") === "on";
   const raw = {
     name: formData.get("name"),
-    totalRounds: formData.get("totalRounds"),
+    totalRounds: unlimitedRounds
+      ? undefined
+      : formData.get("totalRounds") || undefined,
+    unlimitedRounds,
     scoringMode: formData.get("scoringMode"),
     pointsPerMatch: formData.get("pointsPerMatch") || 24,
     durationMinutes: formData.get("durationMinutes") || undefined,
@@ -43,7 +47,8 @@ export async function createTournament(
     tournament = await prisma.tournament.create({
       data: {
         name: data.name,
-        totalRounds: data.totalRounds,
+        totalRounds: data.unlimitedRounds ? 0 : (data.totalRounds ?? 6),
+        unlimitedRounds: data.unlimitedRounds ?? false,
         scoringMode: data.scoringMode,
         pointsPerMatch:
           data.scoringMode === "FIXED" ? (data.pointsPerMatch ?? 24) : 24,
@@ -78,6 +83,7 @@ export async function getRecentTournaments() {
       status: true,
       currentRound: true,
       totalRounds: true,
+      unlimitedRounds: true,
       createdAt: true,
     },
   });

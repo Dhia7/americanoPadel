@@ -19,16 +19,9 @@ export type StandingRow = {
   rounds: Record<number, RoundRecord>;
 };
 
-type MatchWithPlayers = Match & {
-  player1: Player;
-  player2: Player;
-  player3: Player;
-  player4: Player;
-};
-
 type RoundWithMatches = {
   number: number;
-  matches: MatchWithPlayers[];
+  matches: Match[];
 };
 
 function emptyRecord(): RoundRecord {

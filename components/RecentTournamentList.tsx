@@ -14,6 +14,7 @@ type RecentTournament = {
   status: "DRAFT" | "ACTIVE" | "ENDED";
   currentRound: number;
   totalRounds: number;
+  unlimitedRounds: boolean;
   requiresPin: boolean;
   pinVerified: boolean;
 };
@@ -26,7 +27,9 @@ function hrefFor(t: RecentTournament) {
 function statusLabel(t: RecentTournament) {
   if (t.status === "DRAFT") return "Draft";
   if (t.status === "ENDED") return "Ended";
-  return `R${t.currentRound}/${t.totalRounds}`;
+  return t.unlimitedRounds
+    ? `R${t.currentRound}+`
+    : `R${t.currentRound}/${t.totalRounds}`;
 }
 
 export function RecentTournamentList({

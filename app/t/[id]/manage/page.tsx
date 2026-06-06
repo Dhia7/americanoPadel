@@ -12,9 +12,11 @@ import {
   serializePairingHistory,
 } from "@/lib/pairing/display-history";
 import { PollRefresh } from "@/components/PollRefresh";
+import { attachPlayersToMatches, buildPlayerLookup } from "@/lib/match-players";
 import { getTournamentFull } from "@/lib/tournament-data";
 import { computeStandings } from "@/lib/standings";
 import { isPinVerified, requirePinAccess } from "@/lib/pin";
+import { tournamentLiveVersion } from "@/lib/tournament-version";
 import {
   getCurrentRound,
   canGenerateNextRound,
@@ -22,6 +24,9 @@ import {
   canGoBackToPreviousRound,
   canClearCurrentRoundScores,
   allRoundsComplete,
+  formatRoundProgress,
+  getRoundCountForDisplay,
+  isRoundComplete,
 } from "@/lib/tournament-view";
 import {
   parseRound1Snapshot,
@@ -67,10 +72,19 @@ export default async function ManagePage({
   const originalRound1Slots = round1Snapshot
     ? snapshotToSlots(round1Snapshot)
     : undefined;
+  const playerLookup = buildPlayerLookup(tournament.players);
+  const currentRoundMatches = currentRound
+    ? attachPlayersToMatches(currentRound.matches, playerLookup)
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
-      {tournament.status === "ACTIVE" && <PollRefresh />}
+      {tournament.status === "ACTIVE" && (
+        <PollRefresh
+          tournamentId={id}
+          liveVersion={tournamentLiveVersion(tournament)}
+        />
+      )}
 
       <header className="space-y-2">
         <Link href="/" className="text-sm text-zinc-500 hover:underline">
@@ -80,7 +94,7 @@ export default async function ManagePage({
         <p className="text-sm text-zinc-500">
           {tournament.status === "DRAFT"
             ? "Draft — add players and start"
-            : `Round ${tournament.currentRound} / ${tournament.totalRounds} · ${tournament.scoringMode === "FIXED" ? `Fixed ${tournament.pointsPerMatch} pts` : `${tournament.durationMinutes} min`}`}
+            : `${formatRoundProgress(tournament)} · ${tournament.scoringMode === "FIXED" ? `Fixed ${tournament.pointsPerMatch} pts` : `${tournament.durationMinutes} min`}${tournament.unlimitedRounds ? " · Open-ended" : ""}`}
         </p>
         <div className="flex flex-wrap gap-2">
           <CopyLinkButton path={`/t/${id}/manage`} label="Copy manage link" />
@@ -102,6 +116,7 @@ export default async function ManagePage({
             players={tournament.players}
             needsPin={needsPin}
             totalRounds={tournament.totalRounds}
+            unlimitedRounds={tournament.unlimitedRounds}
             courtCount={tournament.courtCount}
             scoringMode={tournament.scoringMode}
             pointsPerMatch={tournament.pointsPerMatch}
@@ -120,6 +135,7 @@ export default async function ManagePage({
             courtCount={tournament.courtCount}
             roundNumber={tournament.currentRound}
             totalRounds={tournament.totalRounds}
+            unlimitedRounds={tournament.unlimitedRounds}
             scoringMode={tournament.scoringMode}
             pointsPerMatch={tournament.pointsPerMatch}
             durationMinutes={tournament.durationMinutes}
@@ -129,6 +145,9 @@ export default async function ManagePage({
             canGoBack={canGoBackToPreviousRound(tournament)}
             canClearScores={canClearCurrentRoundScores(tournament)}
             canEnd={true}
+            currentRoundComplete={
+              currentRound ? isRoundComplete(currentRound) : false
+            }
             nextRoundLabel={`Generate round ${tournament.currentRound + 1}`}
             currentRoundMatches={currentRound?.matches ?? []}
             originalRound1Slots={originalRound1Slots}
@@ -142,14 +161,13 @@ export default async function ManagePage({
                   ? "edit scores"
                   : "enter scores"}
               </h2>
-              {canRegenerateRound(tournament) &&
-                tournament.currentRound === 1 && (
-                  <p className="mb-3 text-sm text-zinc-500">
-                    Wrong round 1 pairings? Use <strong>Edit round 1 pairings</strong>{" "}
-                    above, or <strong>Clear round 1 scores</strong> first if scores
-                    are already entered.
-                  </p>
-                )}
+              {canRegenerateRound(tournament) && (
+                <p className="mb-3 text-sm text-zinc-500">
+                  Wrong pairings? Use <strong>Edit round {tournament.currentRound} pairings</strong>{" "}
+                  above, or <strong>Clear round {tournament.currentRound} scores</strong> first if
+                  scores are already entered.
+                </p>
+              )}
               {canGoBackToPreviousRound(tournament) && (
                 <p className="mb-3 text-sm text-zinc-500">
                   Need to fix an earlier round? Use <strong>Back to round{" "}
@@ -158,7 +176,7 @@ export default async function ManagePage({
                 </p>
               )}
               <div className="grid gap-3">
-                {currentRound.matches.map((m) => (
+                {currentRoundMatches.map((m) => (
                   <MatchCard
                     key={m.id}
                     match={m}
@@ -183,7 +201,10 @@ export default async function ManagePage({
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Live standings</h2>
-        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
+        <Leaderboard
+          rows={standings}
+          totalRounds={getRoundCountForDisplay(tournament)}
+        />
       </section>
     </div>
   );

@@ -1,12 +1,5 @@
 import Link from "next/link";
-import type { Match, Player } from "@prisma/client";
-
-type MatchWithPlayers = Match & {
-  player1: Player;
-  player2: Player;
-  player3: Player;
-  player4: Player;
-};
+import type { MatchWithPlayers } from "@/lib/match-players";
 
 export function MatchCard({
   match,

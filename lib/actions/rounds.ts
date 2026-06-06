@@ -114,7 +114,7 @@ export async function generateNextRoundInternal(
   if (tournament.status !== "ACTIVE") return { error: "Tournament not active" };
 
   const nextRoundNum = tournament.currentRound + 1;
-  if (nextRoundNum > tournament.totalRounds) {
+  if (!tournament.unlimitedRounds && nextRoundNum > tournament.totalRounds) {
     return { error: "All rounds already generated" };
   }
 
@@ -164,7 +164,7 @@ export async function createManualRound(
   if (!tournament) return { error: "Tournament not found" };
 
   const nextRoundNum = tournament.currentRound + 1;
-  if (nextRoundNum > tournament.totalRounds) {
+  if (!tournament.unlimitedRounds && nextRoundNum > tournament.totalRounds) {
     return { error: "All rounds already generated" };
   }
 
@@ -443,7 +443,12 @@ export async function tryAutoAdvanceRound(tournamentId: string): Promise<void> {
     return;
   }
 
-  if (tournament.currentRound >= tournament.totalRounds) return;
+  if (
+    !tournament.unlimitedRounds &&
+    tournament.currentRound >= tournament.totalRounds
+  ) {
+    return;
+  }
 
   const round = tournament.rounds[0];
   if (!round || round.number !== tournament.currentRound) return;

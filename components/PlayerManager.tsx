@@ -20,6 +20,7 @@ export function PlayerManager({
   players,
   needsPin,
   totalRounds,
+  unlimitedRounds = false,
   courtCount,
   scoringMode,
   pointsPerMatch,
@@ -29,6 +30,7 @@ export function PlayerManager({
   players: Player[];
   needsPin: boolean;
   totalRounds: number;
+  unlimitedRounds?: boolean;
   courtCount: number;
   scoringMode: "FIXED" | "TIMED";
   pointsPerMatch: number;
@@ -124,6 +126,7 @@ export function PlayerManager({
         <>
           <RoundConditions
             totalRounds={totalRounds}
+            unlimitedRounds={unlimitedRounds}
             courtCount={courtCount}
             scoringMode={scoringMode}
             pointsPerMatch={pointsPerMatch}
@@ -132,26 +135,28 @@ export function PlayerManager({
           />
 
           <p className="text-sm text-zinc-500">
-            Round 1: players choose who plays together. Rounds 2 and onward are
-            paired automatically.
+            Start with automatic pairings, or choose round 1 matchups yourself.{" "}
+            {unlimitedRounds
+              ? "Rounds keep generating until you end the tournament."
+              : "Later rounds can also be auto-generated or set manually."}
           </p>
-
-          <button
-            type="button"
-            onClick={() => setShowManual((v) => !v)}
-            disabled={pending || !!countError}
-            className="w-full rounded-xl bg-blue-600 py-4 text-lg font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {showManual ? "Hide round 1 pairings" : "Choose round 1 pairings"}
-          </button>
 
           <button
             type="button"
             onClick={handleStart}
             disabled={pending || !!countError}
-            className="w-full text-sm text-zinc-500 hover:text-zinc-700 hover:underline dark:hover:text-zinc-300"
+            className="w-full rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            Or auto-pair round 1 instead
+            {pending ? "Starting…" : "Start with auto pairings"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowManual((v) => !v)}
+            disabled={pending || !!countError}
+            className="w-full rounded-xl border border-blue-300 py-3 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/30"
+          >
+            {showManual ? "Hide round 1 pairings" : "Choose round 1 pairings instead"}
           </button>
 
           {showManual && (
@@ -163,6 +168,7 @@ export function PlayerManager({
               courtCount={courtCount}
               roundNumber={1}
               totalRounds={totalRounds}
+              unlimitedRounds={unlimitedRounds}
               scoringMode={scoringMode}
               pointsPerMatch={pointsPerMatch}
               durationMinutes={durationMinutes}

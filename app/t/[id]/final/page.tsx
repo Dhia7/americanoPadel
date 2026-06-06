@@ -4,6 +4,7 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { getTournamentFull } from "@/lib/tournament-data";
 import { computeStandings } from "@/lib/standings";
+import { getRoundCountForDisplay } from "@/lib/tournament-view";
 
 export default async function FinalPage({
   params,
@@ -25,7 +26,9 @@ export default async function FinalPage({
         </p>
         <h1 className="mt-2 text-3xl font-bold">{tournament.name}</h1>
         <p className="mt-2 text-zinc-500">
-          {tournament.players.length} players · {tournament.totalRounds} rounds
+          {tournament.players.length} players ·{" "}
+          {getRoundCountForDisplay(tournament)} round
+          {getRoundCountForDisplay(tournament) !== 1 ? "s" : ""}
         </p>
         <div className="mt-4 flex justify-center gap-2">
           <CopyLinkButton path={`/t/${id}`} label="Share results" />
@@ -53,7 +56,10 @@ export default async function FinalPage({
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Final standings</h2>
-        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
+        <Leaderboard
+          rows={standings}
+          totalRounds={getRoundCountForDisplay(tournament)}
+        />
       </section>
 
       <Link href="/" className="text-center text-sm text-zinc-500 hover:underline">

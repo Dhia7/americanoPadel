@@ -23,6 +23,7 @@ function SubmitButton() {
 
 export function CreateTournamentForm() {
   const [mode, setMode] = useState<"FIXED" | "TIMED">("FIXED");
+  const [unlimitedRounds, setUnlimitedRounds] = useState(false);
   const [state, formAction] = useActionState<CreateTournamentState, FormData>(
     createTournament,
     null
@@ -45,18 +46,37 @@ export function CreateTournamentForm() {
         />
       </label>
 
-      <label className="block">
-        <span className="text-sm font-medium">Number of rounds</span>
+      <label className="flex items-start gap-2">
         <input
-          name="totalRounds"
-          type="number"
-          min={1}
-          max={20}
-          defaultValue={6}
-          required
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-4 py-3 dark:border-zinc-600 dark:bg-zinc-900"
+          type="checkbox"
+          name="unlimitedRounds"
+          checked={unlimitedRounds}
+          onChange={(e) => setUnlimitedRounds(e.target.checked)}
+          className="mt-1"
         />
+        <span className="text-sm">
+          <span className="font-medium">Open-ended rounds</span>
+          <span className="mt-0.5 block text-zinc-500">
+            Keep generating rounds until you end the tournament — no fixed
+            round limit.
+          </span>
+        </span>
       </label>
+
+      {!unlimitedRounds && (
+        <label className="block">
+          <span className="text-sm font-medium">Number of rounds</span>
+          <input
+            name="totalRounds"
+            type="number"
+            min={1}
+            max={20}
+            defaultValue={6}
+            required
+            className="mt-1 w-full rounded-lg border border-zinc-300 px-4 py-3 dark:border-zinc-600 dark:bg-zinc-900"
+          />
+        </label>
+      )}
 
       <fieldset>
         <legend className="text-sm font-medium">Scoring mode</legend>

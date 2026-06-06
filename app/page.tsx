@@ -16,6 +16,7 @@ export default async function HomePage() {
             status: true,
             currentRound: true,
             totalRounds: true,
+            unlimitedRounds: true,
             pinHash: true,
           },
         })
@@ -32,6 +33,7 @@ export default async function HomePage() {
       status: t.status,
       currentRound: t.currentRound,
       totalRounds: t.totalRounds,
+      unlimitedRounds: t.unlimitedRounds,
       requiresPin: !!t.pinHash,
       pinVerified: await isPinVerified(t.id),
     }))

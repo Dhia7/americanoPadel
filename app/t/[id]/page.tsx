@@ -3,11 +3,15 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { MatchCard } from "@/components/MatchCard";
 import { PollRefresh } from "@/components/PollRefresh";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { attachPlayersToMatches, buildPlayerLookup } from "@/lib/match-players";
 import { getTournamentFull } from "@/lib/tournament-data";
 import { computeStandings } from "@/lib/standings";
+import { tournamentLiveVersion } from "@/lib/tournament-version";
 import {
   getCurrentRound,
   allRoundsComplete,
+  formatRoundProgress,
+  getRoundCountForDisplay,
 } from "@/lib/tournament-view";
 
 export default async function PublicTournamentPage({
@@ -26,25 +30,38 @@ export default async function PublicTournamentPage({
 
   const standings = computeStandings(tournament.players, tournament.rounds);
   const currentRound = getCurrentRound(tournament);
+  const playerLookup = buildPlayerLookup(tournament.players);
+  const currentRoundMatches = currentRound
+    ? attachPlayersToMatches(currentRound.matches, playerLookup)
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
-      <PollRefresh />
+      {tournament.status === "ACTIVE" && (
+        <PollRefresh
+          tournamentId={id}
+          liveVersion={tournamentLiveVersion(tournament)}
+        />
+      )}
       <header className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wide text-emerald-600">
           Live leaderboard
         </p>
         <h1 className="text-2xl font-bold">{tournament.name}</h1>
         <p className="text-sm text-zinc-500">
-          Round {tournament.currentRound} of {tournament.totalRounds}
+          {formatRoundProgress(tournament)}
           {tournament.status === "DRAFT" && " · Not started yet"}
+          {tournament.unlimitedRounds && tournament.status === "ACTIVE" && " · Open-ended"}
         </p>
         <CopyLinkButton path={`/t/${id}`} label="Copy public link" />
       </header>
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">Standings</h2>
-        <Leaderboard rows={standings} totalRounds={tournament.totalRounds} />
+        <Leaderboard
+          rows={standings}
+          totalRounds={getRoundCountForDisplay(tournament)}
+        />
       </section>
 
       {currentRound && (
@@ -53,7 +70,7 @@ export default async function PublicTournamentPage({
             Round {currentRound.number} matches
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {currentRound.matches.map((m) => (
+            {currentRoundMatches.map((m) => (
               <MatchCard
                 key={m.id}
                 match={m}

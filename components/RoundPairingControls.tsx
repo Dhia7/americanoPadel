@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Player } from "@prisma/client";
+import { EndTournamentButton } from "@/components/EndTournamentButton";
 import { ManageActions } from "@/components/ManageActions";
 import { ManualPairingPanel } from "@/components/ManualPairingPanel";
 import type { PlayerPairingSummary } from "@/lib/pairing/display-history";
@@ -21,6 +22,7 @@ export function RoundPairingControls({
   courtCount,
   roundNumber,
   totalRounds,
+  unlimitedRounds = false,
   scoringMode,
   pointsPerMatch,
   durationMinutes,
@@ -30,6 +32,7 @@ export function RoundPairingControls({
   canGoBack,
   canClearScores,
   canEnd,
+  currentRoundComplete = false,
   nextRoundLabel,
   currentRoundMatches,
   originalRound1Slots,
@@ -41,6 +44,7 @@ export function RoundPairingControls({
   courtCount: number;
   roundNumber: number;
   totalRounds: number;
+  unlimitedRounds?: boolean;
   scoringMode: "FIXED" | "TIMED";
   pointsPerMatch: number;
   durationMinutes: number | null;
@@ -50,6 +54,7 @@ export function RoundPairingControls({
   canGoBack: boolean;
   canClearScores: boolean;
   canEnd: boolean;
+  currentRoundComplete?: boolean;
   nextRoundLabel: string;
   currentRoundMatches: {
     player1Id: string;
@@ -60,10 +65,13 @@ export function RoundPairingControls({
   originalRound1Slots?: MatchSlot[];
 }) {
   const [showEdit, setShowEdit] = useState(false);
+  const [showManualNext, setShowManualNext] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const showEditPairings = canRegenerate && roundNumber === 1;
+  const nextRoundNumber = roundNumber + 1;
+  const showEditPairings = canRegenerate;
+  const showManualNextPairings = canGenerateNext && roundNumber >= 1;
   const showResetOriginal =
     showEditPairings && !!originalRound1Slots?.length;
   const editSlots: MatchSlot[] | undefined = canRegenerate
@@ -149,17 +157,36 @@ export function RoundPairingControls({
           tournamentId={tournamentId}
           canGenerateNext={canGenerateNext}
           canRegenerate={canRegenerate}
-          canEnd={canEnd}
+          canEnd={canEnd && !unlimitedRounds}
           needsPin={needsPin}
           nextRoundLabel={nextRoundLabel}
         />
         {showEditPairings && (
           <button
             type="button"
-            onClick={() => setShowEdit((v) => !v)}
+            onClick={() => {
+              setShowManualNext(false);
+              setShowEdit((v) => !v);
+            }}
             className="rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 dark:border-blue-800 dark:text-blue-400"
           >
-            {showEdit ? "Hide edit pairings" : "Edit round 1 pairings"}
+            {showEdit
+              ? "Hide edit pairings"
+              : `Edit round ${roundNumber} pairings`}
+          </button>
+        )}
+        {showManualNextPairings && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowEdit(false);
+              setShowManualNext((v) => !v);
+            }}
+            className="rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 dark:border-blue-800 dark:text-blue-400"
+          >
+            {showManualNext
+              ? `Hide round ${nextRoundNumber} pairings`
+              : `Choose round ${nextRoundNumber} pairings`}
           </button>
         )}
         {showResetOriginal && (
@@ -194,11 +221,33 @@ export function RoundPairingControls({
         )}
       </div>
 
-      {canGenerateNext && roundNumber >= 1 && (
+      {canGenerateNext && roundNumber >= 1 && !showManualNext && (
         <p className="text-sm text-zinc-500">
-          Round {roundNumber + 1} will be paired automatically when you generate
-          it or when all scores are entered (if auto-advance is on).
+          Round {nextRoundNumber}: use <strong>{nextRoundLabel}</strong> for
+          automatic pairings, or <strong>Choose round {nextRoundNumber} pairings</strong>{" "}
+          to set matchups yourself.
         </p>
+      )}
+
+      {unlimitedRounds && (
+        <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 dark:border-red-900 dark:bg-red-950/20">
+          <h3 className="font-semibold text-red-900 dark:text-red-200">
+            Finish open-ended tournament
+          </h3>
+          <p className="mt-1 text-sm text-red-800/80 dark:text-red-300/80">
+            {currentRoundComplete
+              ? `Round ${roundNumber} is complete. Generate another round or end the tournament to publish final standings.`
+              : `This tournament has no round limit. End it whenever you are done playing.`}
+          </p>
+          <div className="mt-3">
+            <EndTournamentButton
+              tournamentId={tournamentId}
+              needsPin={needsPin}
+              prominent
+              label="End tournament & publish results"
+            />
+          </div>
+        </div>
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -210,16 +259,36 @@ export function RoundPairingControls({
           pairingSummary={pairingSummary}
           pairingHistory={pairingHistory}
           courtCount={courtCount}
-          roundNumber={1}
+          roundNumber={roundNumber}
           totalRounds={totalRounds}
+          unlimitedRounds={unlimitedRounds}
           scoringMode={scoringMode}
           pointsPerMatch={pointsPerMatch}
           durationMinutes={durationMinutes}
           needsPin={needsPin}
           mode="regenerate"
           initialSlots={editSlots}
-          originalSlots={originalRound1Slots}
+          originalSlots={roundNumber === 1 ? originalRound1Slots : undefined}
           onCancel={() => setShowEdit(false)}
+        />
+      )}
+
+      {showManualNext && showManualNextPairings && (
+        <ManualPairingPanel
+          tournamentId={tournamentId}
+          players={players}
+          pairingSummary={pairingSummary}
+          pairingHistory={pairingHistory}
+          courtCount={courtCount}
+          roundNumber={nextRoundNumber}
+          totalRounds={totalRounds}
+          unlimitedRounds={unlimitedRounds}
+          scoringMode={scoringMode}
+          pointsPerMatch={pointsPerMatch}
+          durationMinutes={durationMinutes}
+          needsPin={needsPin}
+          mode="next"
+          onCancel={() => setShowManualNext(false)}
         />
       )}
     </div>
